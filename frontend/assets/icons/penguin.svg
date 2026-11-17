@@ -8,5 +8,5 @@
   <path d="M28 34 Q32 37.5 36 34 Q32 39.5 28 34 Z" fill="#d98e32"/>
   <ellipse cx="32" cy="59" rx="9" ry="2.2" fill="#d98e32" opacity="0.85"/>
   <ellipse cx="14" cy="38" rx="3" ry="8" fill="#23272e" transform="rotate(15 14 38)"/>
-  <ellipse sx="50" cy="38" rx="3" ry="8" fill="#23272e" transform="rotate(-15 50 38)"/>
+  <ellipse cx="50" cy="38" rx="3" ry="8" fill="#23272e" transform="rotate(-15 50 38)"/>
 </svg>
