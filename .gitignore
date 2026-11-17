@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+
+# Node (not required to build, kept for tooling)
+node_modules/
+
+# Graphify — local knowledge-graph outputs, never publish
+graphify-out/
+.graphify_*
+
+# Runtime data (never commit databases, keys, sessions)
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+tls/
+*.pem
+*.key
+
+# Vendored frontend dependencies — fetched with scripts/fetch-vendor.{ps1,sh}
+frontend/assets/vendor/*
+!frontend/assets/vendor/README.md
+
+# OS noise
+.DS_Store
+Thumbs.db
