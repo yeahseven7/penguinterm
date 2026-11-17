@@ -143,7 +143,7 @@ class Database:
         except sqlite3.Error:
             pass  # logging must never crash the server
 
-    def recent_logs8self, limit: int = 200) -> list[dict[str, Any]]:
+    def recent_logs(self, limit: int = 200) -> list[dict[str, Any]]:
         return self.query(
             "SELECT * FROM logs ORDER BY ts DESC LIMIT ?", (min(int(limit), 1000),)
         )
@@ -226,9 +226,9 @@ class Database:
             (status, time.time(), server_id),
         )
 
-    # transfers ------------------------------------------------------------
+    # transfers -------------------------------------------------------------
     def record_transfer(self, direction: str, peer: str, filename: str, size: int,
-                         sha256: str, status: str, path: str) -> int:
+                        sha256: str, status: str, path: str) -> int:
         cur = self.execute(
             "INSERT INTO transfers(direction, peer, filename, size, sha256, status, path,"
             " created_at, completed_at) VALUES (?,?,?,?,?,?,?,?,?)",

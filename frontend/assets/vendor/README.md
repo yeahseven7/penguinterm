@@ -7,7 +7,7 @@ registry and verified against pinned SHA-256 hashes.
 To populate this directory:
 
 ```powershell
-poweshell -ExecutionPolicy Bypas -File script\fetch-vendor.ps1
+powershell -ExecutionPolicy Bypass -File scripts\fetch-vendor.ps1
 ```
 
 ```bash
@@ -23,8 +23,7 @@ Both scripts download:
 | xterm-addon-search.js | `xterm-addon-search` | 0.13.0 |
 | xterm-addon-web-links.js | `xterm-addon-web-links` | 0.9.0 |
 
-Each download's SHA-256 is checked against the hashes
-hard-coded in the
+Each download's SHA-256 is checked against the hashes hard-coded in the
 fetch script; on mismatch the file is deleted and the script aborts.
 
 xterm.js is MIT-licensed, (c) 2023 xterm.js contributors — see LICENSE.

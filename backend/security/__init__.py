@@ -147,8 +147,8 @@ def remote_start_cwd(cfg_get) -> str:
     return str(Path.home())
 
 
-# ----------------------------------------------------------------------------
-# Linux resource limits (preece_fn for pty fork)
+# ---------------------------------------------------------------------------
+# Linux resource limits (preexec_fn for pty fork)
 # ---------------------------------------------------------------------------
 def apply_linux_limits() -> None:  # pragma: no cover - runs in forked child
     try:

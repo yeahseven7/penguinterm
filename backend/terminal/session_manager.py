@@ -188,7 +188,7 @@ class SessionManager:
 
     # ------------------------------------------------------------------
     # output pumping (one daemon thread per session)
-    # -------------------------------------------------------------------
+    # ------------------------------------------------------------------
     def _spawn_pump(self, session: Session) -> None:
         src = session.process.output_queue
 
@@ -210,6 +210,7 @@ class SessionManager:
                     session.last_activity = time.time()
                     for key, sub in list(session.subscribers.items()):
                         self._offer(session, key, sub, item)
+
         threading.Thread(target=pump, name=f"pump-{session.id}", daemon=True).start()
 
     def _offer(self, session: Session, key: str, sub: Subscriber,
@@ -248,9 +249,9 @@ class SessionManager:
         for key, sub in list(session.subscribers.items()):
             self._offer(session, key, sub, None)
 
-    # ----------------------------------------------------------------
+    # ------------------------------------------------------------------
     # attach / detach / IO
-    # -----------------------------------------------------------------
+    # ------------------------------------------------------------------
     def can_view(self, session: Session, user: dict[str, Any]) -> bool:
         if session.kind == "local":
             return int(user["id"]) == session.created_by
