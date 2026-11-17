@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="color-scheme" content="dark" />
+<title>PenguinTerm — Multiplayer Terminal</title>
+<link rel="icon" href="assets/icons/penguin.svg" />
+<link rel="stylesheet" href="assets/vendor/xterm.css" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════ LOGIN / SETUP ═══════════════════════ -->
+<div id="auth-screen" class="auth-screen hidden">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <img src="assets/icons/penguin.svg" alt="PenguinTerm penguin" width="64" height="64" />
+      <div>
+        <h1>PenguinTerm</h1>
+        <p class="auth-tagline">Decentralized multiplayer terminal</p>
+      </div>
+    </div>
+
+    <div id="auth-setup-panel" class="hidden">
+      <h2>Create the owner account</h2>
+      <p class="muted">This computer will host your PenguinTerm server. The owner manages invitations, permissions and security.</p>
+      <form id="setup-form">
+        <label>Username<input name="username" autocomplete="username" required minlength="2" /></label>
+        <label>Password<input name="password" type="password" autocomplete="new-password" required minlength="8" /></label>
+        <label>Confirm password<input name="confirm" type="password" autocomplete="new-password" required minlength="8" /></label>
+        <button type="submit" class="btn btn-primary btn-block">Create server owner account</button>
+      </form>
+    </div>
+
+    <div id="auth-login-panel" class="hidden">
+      <h2>Sign in</h2>
+      <form id="login-form">
+        <label>Username<input name="username" autocomplete="username" required /></label>
+        <label>Password<input name="password" type="password" autocomplete="current-password" required /></label>
+        <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+      </form>
+    </div>
+
+    <div id="auth-invite-panel" class="hidden">
+      <h2>Accept invitation</h2>
+      <p class="muted">The server owner invited you. Choose your account credentials for their server.</p>
+      <form id="invite-form">
+        <label>Username<input name="username" autocomplete="off" required minlength="2" /></label>
+        <label>Password<input name="password" type="password" autocomplete="new-password" required minlength="8" /></label>
+        <button type="submit" class="btn btn-primary btn-block">Create account &amp; join</button>
+      </form>
+    </div>
+
+    <div class="auth-alt">
+      <button id="auth-toggle-invite" class="linklike">Have an invitation link? Join with an invite</button>
+    </div>
+    <div id="auth-error" class="form-error hidden"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ APP SHELL ═══════════════════════ -->
+<div id="app" class="app hidden">
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <img src="assets/icons/penguin.svg" alt="" width="26" height="26" class="topbar-logo" />
+      <span class="topbar-title">PenguinTerm</span>
+      <span class="topbar-sep"></span>
+      <div class="server-chip" title="This PenguinTerm server">
+        <span class="dot dot-green" id="self-server-dot"></span>
+        <span id="self-server-name">this machine</span>
+      </div>
+      <div class="conn-indicator" id="conn-indicator" title="Connection to server">
+        <span class="dot dot-green"></span><span id="conn-text">connected</span><span id="conn-latency" class="muted"></span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="online-users" id="online-users" title="Users connected to this server"></div>
+      <button class="icon-btn" id="btn-diagnostics" title="Connection diagnostics" aria-label="Diagnostics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 9 8 12 2 12"/></svg></button>
+      <button class="icon-btn" id="btn-server-settings" title="Server settings" aria-label="Server settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg></button>
+      <button class="icon-btn" id="btn-settings" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+      <div class="user-chip" id="user-chip"></div>
+      <button class="btn btn-ghost btn-small" id="btn-logout">Sign out</button>
+    </div>
+  </header>
+
+  <div class="workspace">
+
+    <!-- ─────────── LEFT SIDEBAR ─────────── -->
+    <aside class="sidebar">
+      <nav class="sidebar-tabs">
+        <button class="side-tab active" data-panel="panel-sessions" title="Terminal sessions">Sessions</button>
+        <button class="side-tab" data-panel="panel-servers" title="Your friends' servers">Servers</button>
+        <button class="side-tab" data-panel="panel-rooms" title="Rooms">Rooms</button>
+        <button class="side-tab" data-panel="panel-users" title="Users on this server">Users</button>
+        <button class="side-tab" data-panel="panel-transfers" title="File transfers">Files</button>
+      </nav>
+
+      <section class="side-panel active" id="panel-sessions">
+        <div class="side-panel-head">
+          <h3>Terminal sessions</h3>
+          <button class="btn btn-primary btn-tiny" id="btn-new-tab-side">+ New</button>
+        </div>
+        <div id="session-list" class="list"></div>
+        <p class="side-hint">Local sessions are private to you. Shared sessions are visible to everyone on this server.</p>
+      </section>
+
+      <section class="side-panel" id="panel-servers">
+        <div class="side-panel-head">
+          <h3>Servers</h3>
+          <button class="btn btn-primary btn-tiny" id="btn-add-server">+ Add</button>
+        </div>
+        <div id="server-list" class="list"></div>
+        <p class="side-hint">Add your friends' servers to check reachability and open their web UI. Their OS and shell are shown on their side.</p>
+      </section>
+
+      <section class="side-panel" id="panel-rooms">
+        <div class="side-panel-head">
+          <h3>Rooms</h3>
+          <button class="btn btn-primary btn-tiny" id="btn-create-room">+ New</button>
+        </div>
+        <div id="room-list" class="list"></div>
+        <div class="side-panel-foot">
+          <input id="join-room-code" placeholder="Join with room code…" maxlength="14" />
+          <button class="btn btn-ghost btn-small" id="btn-join-room">Join</button>
+        </div>
+      </section>
+
+      <section class="side-panel" id="panel-users">
+        <div class="side-panel-head">
+          <h3>Users</h3>
+          <button class="btn btn-primary btn-tiny owner-only" id="btn-create-user">+ User</button>
+        </div>
+        <div id="user-list" class="list"></div>
+        <div class="side-panel-foot owner-only">
+          <button class="btn btn-ghost btn-small btn-block" id="btn-create-invite">Create invitation link</button>
+        </div>
+        <div id="invite-list" class="list"></div>
+      </section>
+
+      <section class="side-panel" id="panel-transfers">
+        <div class="side-panel-head">
+          <h3>File transfers</h3>
+          <label class="btn btn-primary btn-tiny" for="upload-input">Send file</label>
+          <input type="file" id="upload-input" hidden multiple />
+        </div>
+        <div id="transfer-progress"></div>
+        <div id="transfer-list" class="list"></div>
+        <div class="side-panel-foot">
+          <button class="btn btn-ghost btn-small btn-block" id="btn-open-inbox">Open transfer inbox</button>
+        </div>
+        <p class="side-hint">Files arrive in this server's transfer inbox. SHA-256 is verified on every transfer.</p>
+      </section>
+    </aside>
+
+    <!-- ─────────── TERMINAL AREA ─────────── -->
+    <main class="main-area">
+      <div class="tabbar" id="tabbar">
+        <div id="tabs" class="tabs"></div>
+        <div class="tabbar-actions">
+          <button class="icon-btn" id="btn-search" title="Search output (Ctrl+Shift+F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+          <button class="icon-btn" id="btn-font-minus" title="Decrease font size">A−</button>
+          <button class="icon-btn" id="btn-font-plus" title="Increase font size">A+</button>
+          <div class="new-tab-wrap">
+            <button class="btn btn-primary btn-small" id="btn-new-tab">+ New terminal</button>
+            <div class="new-tab-menu hidden" id="new-tab-menu"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="searchbar hidden" id="searchbar">
+        <input id="search-input" placeholder="Search terminal output…" />
+        <button class="icon-btn" id="search-prev" title="Previous match">↑</button>
+        <button class="icon-btn" id="search-next" title="Next match">↓</button>
+        <button class="icon-btn" id="search-close" title="Close (Esc)">✕</button>
+      </div>
+
+      <div class="terminal-host" id="terminal-host"></div>
+
+      <div class="empty-state" id="empty-state">
+        <img src="assets/icons/penguin.svg" alt="" width="72" height="72" class="empty-penguin" />
+        <h2>No terminal open</h2>
+        <p>Open a private terminal on this machine, or join a shared session from the Sessions panel.</p>
+        <button class="btn btn-primary" id="btn-empty-new-tab">Open a terminal</button>
+        <div class="empty-shared" id="empty-shared"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ─────────── STATUS BAR ─────────── -->
+  <footer class="statusbar">
+    <div class="statusbar-left">
+      <span class="status-item status-kind" id="status-kind" title="Session type">LOCAL</span>
+      <span class="status-item" id="status-os" title="Host operating system">—</span>
+      <span class="status-item" id="status-shell" title="Shell">—</span>
+      <span class="status-item hidden" id="status-restricted" title="Restricted mode is active for this session">RESTRICTED</span>
+    </div>
+    <div class="statusbar-right">
+      <span class="status-item" id="status-viewers" title="People viewing this session"></span>
+      <span class="status-item" id="status-process" title="Shell process">—</span>
+      <span class="status-item" id="status-latency" title="Round-trip latency">—</span>
+    </div>
+  </footer>
+</div>
+
+<!-- ═══════════════════════ MODALS ═══════════════════════ -->
+<div class="modal-backdrop hidden" id="modal-backdrop">
+
+  <div class="modal hidden" id="modal-diagnostics">
+    <div class="modal-head"><h2>Connection diagnostics</h2><button class="icon-btn modal-close">✕</button></div>
+    <div class="modal-body"><div id="diagnostics-content" class="diagnostics-grid">Loading…</div></div>
+    <div class="modal-foot"><button class="btn btn-ghost" id="btn-refresh-diag">Refresh</button><button class="btn btn-primary modal-close">Close</button></div>
+  </div>
+
+  <div class="modal hidden wide" id="modal-server-settings">
+    <div class="modal-head"><h2>Server settings</h2><button class="icon-btn modal-close">✕</button></div>
+    <div class="modal-body">
+      <div class="settings-grid">
+        <div class="settings-block">
+          <h3>Runtime</h3>
+          <div id="server-status-content" class="kv"></div>
+          <div class="btn-row">
+            <button class="btn btn-ghost" id="btn-restart-server">Restart server</button>
+            <button class="btn btn-danger" id="btn-stop-server">Stop server</button>
+          </div>
+          <p class="side-hint">Stop/restart apply to the PenguinTerm server process. Run it under systemd or Task Scheduler to have it come back automatically.</p>
+        </div>
+        <div class="settings-block">
+          <h3>Configuration</h3>
+          <div id="server-config-form" class="form-grid"></div>
+          <div class="btn-row"><button class="btn btn-primary" id="btn-save-config">Save configuration</button></div>
+          <p class="side-hint">Host/port/TLS changes need a restart.</p>
+        </div>
+        <div class="settings-block">
+          <h3>Shared directories</h3>
+          <p class="side-hint">Explicitly shared directories are downloadable by authenticated users. Your home directory is never shared implicitly.</p>
+          <form id="shared-dir-form" class="inline-form"><input name="path" placeholder="Absolute path, e.g. C:\\Users\\you\\shared or /srv/shared" required /><button class="btn btn-ghost" type="submit">Add</button></form>
+          <div id="shared-dir-list" class="list"></div>
+        </div>
+        <div class="settings-block">
+          <h3>Connection log</h3>
+          <div id="server-log" class="log-view"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="modal-settings">
+    <div class="modal-head"><h2>Settings</h2><button class="icon-btn modal-close">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <label>Font size (px)<input type="number" id="setting-font-size" min="9" max="28" step="1" /></label>
+        <label>Cursor style<select id="setting-cursor"><option value="block">Block</option><option value="bar">Bar</option><option value="underline">Underline</option></select></label>
+        <label class="check"><input type="checkbox" id="setting-cursor-blink" /> Blinking cursor</label>
+        <label>Scrollback lines<input type="number" id="setting-scrollback" min="500" max="50000" step="500" /></label>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary modal-close">Done</button></div>
+  </div>
+
+  <div class="modal hidden" id="modal-add-server">
+    <div class="modal-head"><h2>Add a server</h2><button class="icon-btn modal-close">✕</button></div>
+    <div class="modal-body">
+      <form id="add-server-form" class="form-grid">
+        <label>Label<input name="label" placeholder="Alice — Arch Linux" required /></label>
+        <label>Host<input name="host" placeholder="alice.ddns.net or 100.x.y.z (Tailscale)" required /></label>
+        <label>Port<input name="port" type="number" value="8443" min="1" max="65535" required /></label>
+        <label>Username (optional)<input name="username" placeholder="Account you use on that server" /></label>
+        <label class="check"><input type="checkbox" name="tls" checked /> Use HTTPS/WSS (recommended)</label>
+        <div class="btn-row">
+          <button type="button" class="btn btn-ghost" id="btn-probe-server">Test connection</button>
+          <span id="probe-result" class="muted"></span>
+        </div>
+        <button type="submit" class="btn btn-primary">Save server</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="modal-create-room">
+    <div class="modal-head"><h2>Create room</h2><button class="icon-btn modal-close">✕</button></div>
+    <div class="modal-body">
+      <form id="create-room-form" class="form-grid">
+        <label>Room name<input name="name" placeholder="gpu-rig, dev-box, deploy crew…" required /></label>
+        <button type="submit" class="btn btn-primary">Create room</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="modal-create-user">
+    <div class="modal-head"><h2>Create user</h2><button class="icon-btn modal-close">✕</button></div>
+    <div class="modal-body">
+      <form id="create-user-form" class="form-grid">
+        <label>Username<input name="username" required minlength="2" autocomplete="off" /></label>
+        <label>Password<input name="password" type="password" required minlength="8" autocomplete="new-password" /></label>
+        <label>Role<select name="role"><option value="viewer">Viewer — sees output only</option><option value="editor">Editor — can type in shared sessions &amp; transfer files</option></select></label>
+        <button type="submit" class="btn btn-primary">Create user</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="modal-invite">
+    <div class="modal-head"><h2>Create invitation</h2><button class="icon-btn modal-close">✕</button></div>
+    <div class="modal-body">
+      <form id="create-invite-form" class="form-grid">
+        <label>Role<select name="role"><option value="viewer">Viewer</option><option value="editor" selected>Editor</option></select></label>
+        <label>Max uses<input name="max_uses" type="number" value="1" min="1" max="100" /></label>
+        <label>Expires after (hours)<input name="expires_hours" type="number" value="72" min="1" max="720" /></label>
+        <button type="submit" class="btn btn-primary">Generate invitation</button>
+      </form>
+      <div id="invite-result" class="invite-result hidden">
+        <label>Invitation URL<input id="invite-url" readonly /></label>
+        <button class="btn btn-ghost" id="btn-copy-invite">Copy link</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="modal-send-peer">
+    <div class="modal-head"><h2>Send file to a friend</h2><button class="icon-btn modal-close">✕</button></div>
+    <div class="modal-body">
+      <form id="send-peer-form" class="form-grid">
+        <label>Server<select name="server_id" id="send-peer-server"></select></label>
+        <label>Your username on that server<input name="username" required autocomplete="off" /></label>
+        <label>Your password on that server<input name="password" type="password" required /></label>
+        <p class="side-hint">Your credentials are used once for this transfer and never stored.</p>
+        <button type="submit" class="btn btn-primary">Send file</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script src="assets/vendor/xterm.js"></script>
+<script src="assets/vendor/xterm-addon-fit.js"></script>
+<script src="assets/vendor/xterm-addon-search.js"></script>
+<script src="assets/vendor/xterm-addon-web-links.js"></script>
+<script src="js/api.js"></script>
+<script src="js/terminal.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
